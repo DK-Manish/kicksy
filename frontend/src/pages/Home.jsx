@@ -143,7 +143,7 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} initialWishlisted={product.is_wishlisted} />
             ))}
           </div>
         )}
@@ -178,7 +178,7 @@ export default function Home() {
         ) : filteredNewArrivals.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {filteredNewArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} initialWishlisted={product.is_wishlisted} />
             ))}
           </div>
         ) : (

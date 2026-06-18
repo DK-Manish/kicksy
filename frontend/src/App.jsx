@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -10,6 +10,13 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
+import Account from './pages/Account';
+import Wishlist from './pages/Wishlist';
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './components/AdminLayout';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminProductForm from './pages/admin/AdminProductForm';
 
 function App() {
   return (
@@ -26,6 +33,15 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/orders/:orderNumber" element={<OrderDetail />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route index element={<Navigate to="/admin/orders" replace />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="products/new" element={<AdminProductForm />} />
+          <Route path="products/:slug/edit" element={<AdminProductForm />} />
+        </Route>
         </Routes>
       </main>
       <Footer />

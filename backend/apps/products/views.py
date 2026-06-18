@@ -7,7 +7,8 @@ from django.db.models import Q
 from .models import Category, Brand, Product
 from .serializers import (
     CategorySerializer, BrandSerializer,
-    ProductListSerializer, ProductDetailSerializer
+    ProductListSerializer, ProductDetailSerializer,
+    ProductAdminWriteSerializer
 )
 
 
@@ -168,3 +169,31 @@ class ProductFacetsView(APIView):
             'categories': category_counts,
             'brands': brand_counts,
         })
+
+class AdminProductListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return Product.objects.all().select_related(
+            'brand', 'category'
+        ).prefetch_related('images', 'variants').order_by('-created_at')
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return ProductAdminWriteSerializer
+        return ProductDetailSerializer
+
+
+class AdminProductDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdminUser]
+    lookup_field = 'slug'
+
+    def get_queryset(self):
+        return Product.objects.all().select_related(
+            'brand', 'category'
+        ).prefetch_related('images', 'variants')
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return ProductAdminWriteSerializer
+        return ProductDetailSerializer

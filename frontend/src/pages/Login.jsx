@@ -14,6 +14,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setError('');
     setLoading(true);
     try {
@@ -21,7 +22,6 @@ export default function Login() {
       navigate(redirectTo);
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid email or password');
-    } finally {
       setLoading(false);
     }
   };
@@ -55,6 +55,7 @@ export default function Login() {
           <input
             type="password"
             required
+            autoComplete="new-password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"

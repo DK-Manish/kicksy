@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as reviewsApi from '../api/reviews';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, initialWishlisted = false, onWishlistChange }) {
   const { isAuthenticated } = useAuth();
-  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlisted, setWishlisted] = useState(initialWishlisted);
   const hasDiscount = product.discount_percent > 0;
 
   const handleWishlist = async (e) => {
@@ -14,7 +14,9 @@ export default function ProductCard({ product }) {
     if (!isAuthenticated) return;
     try {
       const res = await reviewsApi.toggleWishlist(product.slug);
-      setWishlisted(res.data.status === 'added');
+      const nowWishlisted = res.data.status === 'added';
+      setWishlisted(nowWishlisted);
+      if (onWishlistChange) onWishlistChange(product.id, nowWishlisted);
     } catch (err) {
       console.error(err);
     }
