@@ -15,6 +15,7 @@ cloudinary = "*"
 django-cloudinary-storage = "*"
 django-filter = "*"
 stripe = "*"
+gunicorn = "*"
 
 [dev-packages]
 
