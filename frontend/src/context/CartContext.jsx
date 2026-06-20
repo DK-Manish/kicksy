@@ -10,16 +10,13 @@ export function CartProvider({ children }) {
   const [loading, setLoading] = useState(false);
 
   const fetchCart = useCallback(async () => {
-    if (!isAuthenticated) {
-      setCart(null);
-      return;
-    }
     setLoading(true);
     try {
       const res = await cartApi.getCart();
       setCart(res.data);
     } catch (err) {
       console.error('Failed to fetch cart', err);
+      setCart(null);
     } finally {
       setLoading(false);
     }

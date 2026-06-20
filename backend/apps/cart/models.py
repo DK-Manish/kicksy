@@ -1,18 +1,31 @@
+import uuid
 from django.db import models
 from apps.accounts.models import User
 from apps.products.models import Product, ProductVariant
 
 
 class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart', null=True, blank=True)
+    guest_id = models.UUIDField(default=None, null=True, blank=True, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'carts'
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(user__isnull=False, guest_id__isnull=True) |
+                    models.Q(user__isnull=True, guest_id__isnull=False)
+                ),
+                name='cart_has_user_or_guest_id_not_both'
+            )
+        ]
 
     def __str__(self):
-        return f'Cart ({self.user.email})'
+        if self.user:
+            return f'Cart ({self.user.email})'
+        return f'Guest Cart ({self.guest_id})'
 
     @property
     def total_items(self):

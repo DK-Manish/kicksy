@@ -43,10 +43,6 @@ export default function ProductDetail() {
   }, [slug]);
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
     if (!selectedSize) {
       setAddedMessage('Please select a size');
       return;

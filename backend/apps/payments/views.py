@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework import status
 from apps.orders.models import Order, OrderStatusHistory
 
@@ -13,16 +13,18 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class CreatePaymentIntentView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         order_number = request.data.get('order_number')
 
+        if request.user and request.user.is_authenticated:
+            order_lookup = {'order_number': order_number, 'user': request.user}
+        else:
+            order_lookup = {'order_number': order_number, 'user__isnull': True}
+
         try:
-            order = Order.objects.get(
-                order_number=order_number,
-                user=request.user
-            )
+            order = Order.objects.get(**order_lookup)
         except Order.DoesNotExist:
             return Response(
                 {'error': 'Order not found'},
@@ -40,7 +42,7 @@ class CreatePaymentIntentView(APIView):
             currency='gbp',
             metadata={
                 'order_number': order.order_number,
-                'user_id': str(request.user.id),
+                'user_id': str(request.user.id) if request.user and request.user.is_authenticated else 'guest',
             }
         )
 

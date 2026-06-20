@@ -1,4 +1,5 @@
 from .base import *
+from corsheaders.defaults import default_headers
 
 DEBUG = True
 
@@ -10,3 +11,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-guest-id',
+]

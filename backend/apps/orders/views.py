@@ -1,13 +1,14 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django.shortcuts import get_object_or_404
 from .models import Order, OrderItem, OrderStatusHistory
 from .serializers import (
     OrderSerializer, OrderListSerializer, CreateOrderSerializer
 )
 from apps.cart.models import Cart
+from apps.cart.views import get_or_create_cart
 
 
 class OrderListView(generics.ListAPIView):
@@ -22,11 +23,17 @@ class OrderListView(generics.ListAPIView):
 
 class OrderDetailView(generics.RetrieveAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
+        if self.request.user and self.request.user.is_authenticated:
+            return Order.objects.filter(
+                user=self.request.user
+            ).prefetch_related('items', 'history')
+        # Guests can look up any order by its exact order_number —
+        # this acts as the access key, same as a tracking number.
         return Order.objects.filter(
-            user=self.request.user
+            user__isnull=True
         ).prefetch_related('items', 'history')
 
     def get_object(self):
@@ -37,19 +44,15 @@ class OrderDetailView(generics.RetrieveAPIView):
 
 
 class CreateOrderView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = CreateOrderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            cart = Cart.objects.get(user=request.user)
-        except Cart.DoesNotExist:
-            return Response(
-                {'error': 'Cart is empty'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        cart, error = get_or_create_cart(request)
+        if error:
+            return error
 
         cart_items = cart.items.select_related(
             'product', 'variant'
@@ -65,8 +68,10 @@ class CreateOrderView(APIView):
         shipping_cost = 0 if subtotal >= 60 else 4.99
         total = subtotal + shipping_cost
 
+        order_user = request.user if request.user and request.user.is_authenticated else None
+
         order = Order.objects.create(
-            user=request.user,
+            user=order_user,
             subtotal=subtotal,
             shipping_cost=shipping_cost,
             total=total,
