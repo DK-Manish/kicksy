@@ -6,10 +6,11 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import * as ordersApi from '../api/orders';
 import * as paymentsApi from '../api/payments';
+import * as authApi from '../api/auth';
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState('address');
@@ -18,6 +19,9 @@ export default function Checkout() {
   const [order, setOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
 
   const [address, setAddress] = useState({
     full_name: user?.full_name || '',
@@ -36,6 +40,54 @@ export default function Checkout() {
       setStripePromise(loadStripe(res.data.publishable_key));
     });
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      authApi.getAddresses().then((res) => {
+        const addrs = res.data.results || res.data;
+        setSavedAddresses(addrs);
+        const defaultAddr = addrs.find((a) => a.is_default) || addrs[0];
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          prefillAddress(defaultAddr);
+        }
+      }).catch(() => {});
+    }
+  }, [isAuthenticated]);
+
+  const prefillAddress = (addr) => {
+    setAddress({
+      full_name: addr.full_name,
+      email: user?.email || '',
+      phone: addr.phone || '',
+      address_line1: addr.address_line1,
+      address_line2: addr.address_line2 || '',
+      city: addr.city,
+      county: addr.county || '',
+      postcode: addr.postcode,
+      country: addr.country,
+    });
+  };
+
+  const handleSelectSavedAddress = (addr) => {
+    setSelectedAddressId(addr.id);
+    prefillAddress(addr);
+  };
+
+  const handleUseNewAddress = () => {
+    setSelectedAddressId(null);
+    setAddress({
+      full_name: user?.full_name || '',
+      email: user?.email || '',
+      phone: '',
+      address_line1: '',
+      address_line2: '',
+      city: '',
+      county: '',
+      postcode: '',
+      country: 'United Kingdom',
+    });
+  };
 
   const items = cart?.items || [];
   const subtotal = cart?.subtotal || 0;
@@ -59,6 +111,26 @@ export default function Checkout() {
       const orderRes = await ordersApi.createOrder(address);
       setOrder(orderRes.data);
 
+      // Auto-save address if logged in and it's a new address (not a saved one)
+      if (isAuthenticated && !selectedAddressId) {
+        const isAlreadySaved = savedAddresses.some(
+          (a) => a.address_line1 === address.address_line1 && a.postcode === address.postcode
+        );
+        if (!isAlreadySaved) {
+          authApi.addAddress({
+            full_name: address.full_name,
+            phone: address.phone,
+            address_line1: address.address_line1,
+            address_line2: address.address_line2,
+            city: address.city,
+            county: address.county,
+            postcode: address.postcode,
+            country: address.country,
+            is_default: savedAddresses.length === 0,
+          }).catch(() => {});
+        }
+      }
+
       const intentRes = await paymentsApi.createPaymentIntent(orderRes.data.order_number);
       setClientSecret(intentRes.data.client_secret);
       setStep('payment');
@@ -72,6 +144,7 @@ export default function Checkout() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-xl font-medium text-gray-900 mb-6">Checkout</h1>
+
       <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-8 flex items-start gap-3">
         <div className="text-sm text-amber-800">
           <span className="font-medium">Demo store</span> — Stripe is in test mode. No real payments are processed.
@@ -84,6 +157,46 @@ export default function Checkout() {
           {step === 'address' && (
             <form onSubmit={handleAddressSubmit} className="space-y-4">
               <h2 className="text-sm font-medium text-gray-900 mb-2">Shipping address</h2>
+
+              {/* Saved addresses */}
+              {isAuthenticated && savedAddresses.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Saved addresses</p>
+                  <div className="grid gap-2">
+                    {savedAddresses.map((addr) => (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        onClick={() => handleSelectSavedAddress(addr)}
+                        className={`text-left border rounded-lg px-4 py-3 text-sm transition ${
+                          selectedAddressId === addr.id
+                            ? 'border-black bg-gray-50'
+                            : 'border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        <span className="font-medium text-gray-900">{addr.full_name}</span>
+                        {addr.is_default && (
+                          <span className="ml-2 text-[10px] bg-black text-white px-1.5 py-0.5 rounded-full">Default</span>
+                        )}
+                        <br />
+                        <span className="text-gray-500">{addr.address_line1}, {addr.city}, {addr.postcode}</span>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={handleUseNewAddress}
+                      className={`text-left border rounded-lg px-4 py-3 text-sm transition ${
+                        selectedAddressId === null && address.address_line1 === ''
+                          ? 'border-black bg-gray-50'
+                          : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      <span className="text-gray-700">+ Use a new address</span>
+                    </button>
+                  </div>
+                  <hr className="my-4" />
+                </div>
+              )}
 
               {error && (
                 <div className="bg-red-50 text-red-600 text-sm px-3 py-2 rounded-md">{error}</div>

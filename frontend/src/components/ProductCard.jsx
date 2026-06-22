@@ -11,7 +11,10 @@ export default function ProductCard({ product, initialWishlisted = false, onWish
   const handleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      window.location.href = '/login';
+      return;
+    }
     try {
       const res = await reviewsApi.toggleWishlist(product.slug);
       const nowWishlisted = res.data.status === 'added';
@@ -52,7 +55,7 @@ export default function ProductCard({ product, initialWishlisted = false, onWish
           onClick={handleWishlist}
           aria-label="Toggle wishlist"
           className={`absolute top-2 right-2 w-7 h-7 rounded-full bg-white/95 flex items-center justify-center text-sm transition-all duration-200
-            ${wishlisted ? 'opacity-100 translate-y-0 text-red-500' : 'opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 text-gray-500'}`}
+            ${wishlisted ? 'opacity-100 translate-y-0 text-red-500' : 'opacity-100 translate-y-0 group-hover:opacity-100 group-hover:translate-y-0 text-gray-400'}`}
         >
           <i className={wishlisted ? 'ti ti-heart-filled' : 'ti ti-heart'}></i>
         </button>
