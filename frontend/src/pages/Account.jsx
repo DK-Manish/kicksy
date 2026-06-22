@@ -256,8 +256,8 @@ export default function Account() {
           ) : (
             <div className="space-y-3">
               {addresses.map(addr => (
-                <div key={addr.id} className="border rounded-xl p-4 flex justify-between items-start gap-4">
-                  <div className="text-sm text-gray-700 space-y-0.5">
+                <div key={addr.id} className="border rounded-xl p-4 flex justify-between items-start gap-4 overflow-hidden">
+                  <div className="text-sm text-gray-700 space-y-0.5 min-w-0 break-words">
                     <p className="font-medium text-gray-900">{addr.full_name}</p>
                     <p>{addr.address_line1}</p>
                     {addr.address_line2 && <p>{addr.address_line2}</p>}

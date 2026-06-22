@@ -71,7 +71,13 @@ export default function Checkout() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <h1 className="text-xl font-medium text-gray-900 mb-8">Checkout</h1>
+      <h1 className="text-xl font-medium text-gray-900 mb-6">Checkout</h1>
+      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-8 flex items-start gap-3">
+        <div className="text-sm text-amber-800">
+          <span className="font-medium">Demo store</span> — Stripe is in test mode. No real payments are processed.
+          Use card <span className="font-mono font-medium">4242 4242 4242 4242</span>, any future date, any CVC.
+        </div>
+      </div>
 
       <div className="grid md:grid-cols-3 gap-10">
         <div className="md:col-span-2">
@@ -236,15 +242,12 @@ function PaymentForm({ order, onSuccess }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h2 className="text-sm font-medium text-gray-900 mb-2">Payment details</h2>
-      <p className="text-xs text-gray-500 mb-4">
-        Test mode — use card number 4242 4242 4242 4242, any future date, any CVC.
-      </p>
 
       {error && (
         <div className="bg-red-50 text-red-600 text-sm px-3 py-2 rounded-md">{error}</div>
       )}
 
-      <PaymentElement />
+      <PaymentElement options={{ wallets: { link: 'never' } }} />
 
       <button
         type="submit"

@@ -69,8 +69,8 @@ export default function Navbar() {
                 <button className="hover:text-amber-500 transition" aria-label="Account">
                   <i className="ti ti-user text-xl"></i>
                 </button>
-                <div className="absolute right-0 top-full w-44 bg-white text-black rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
-                  <div className="px-4 py-2 text-xs text-gray-500 border-b">{user?.email}</div>
+                <div className="absolute right-0 top-full w-56 bg-white text-black rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
+                  <div className="px-4 py-2 text-xs text-gray-500 border-b truncate">{user?.email}</div>
                   <Link to="/account" className="block px-4 py-2 text-sm hover:bg-gray-100">My account</Link>
                   <Link to="/orders" className="block px-4 py-2 text-sm hover:bg-gray-100">My orders</Link>
                   {user?.role === 'admin' && (
